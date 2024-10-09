@@ -6,7 +6,7 @@ const countriesContainer = document.querySelector('.countries');
 // ⭐️ 255. Handling Rejected Promises
 const renderError = function (msg) {
   countriesContainer.insertAdjacentText('beforeend', msg);
-  countriesContainer.style.opacity = 1;
+  //   countriesContainer.style.opacity = 1;
 };
 ///////////////////////////////////////////////
 
@@ -26,7 +26,7 @@ const renderCountry = function (data, className = '') {
   </article>`;
 
   countriesContainer.insertAdjacentHTML('beforeend', html);
-  countriesContainer.style.opacity = 1;
+  //   countriesContainer.style.opacity = 1;
 };
 
 const getCountryDataAndNeighbour = function (country) {
@@ -109,8 +109,7 @@ const getCountryDataAndNeighbour = function (country) {
 // getCountryDataAndNeighbour('usa');
 
 // 💀callback hell💀
-// Since ES6, there's a way of escaping callback hell by using something
-// called promises.
+// Since ES6, there's a way of escaping callback hell by using something called "promises".
 /*
 setTimeout(() => {
   console.log('1 second passed');
@@ -125,10 +124,6 @@ setTimeout(() => {
   }, 1000);
 }, 1000);
 */
-
-// const request = new XMLHttpRequest();
-// request.open('GET', `https://restcountries.com/v2/name/${country}`);
-// request.send();
 
 // ⭐️ 252. Promises and the Fetch API
 // const request = fetch('https://restcountries.com/v2/name/canada');
@@ -167,7 +162,30 @@ setTimeout(() => {
 // ⭐️ 253. Consuming promises
 // fetch function에 의해 리턴된 프로미스를 consume하는 법을 배울 것이다.
 // const request = fetch('https://restcountries.com/v2/name/canada');
-// console.log(request);
+// console.log(request); // Promise 리턴 [PromiseState]: 'fulfilled'
+
+// 🍀 10/9 복습
+const getCountryData2 = function (country) {
+  fetch(`https://restcountries.com/v2/name/${country}`)
+    .then(
+      response => {
+        console.log(response);
+        return response.json();
+      }
+      // Resoponse {...} body:ReadableStream ... body부분에 있는 실질적인 결과데이터를 가져오기 위해선 json()메서드를 사용해야 한다. json()는 fetch()로부터 발생한 모든 객체, 즉 resolved data(=response)상에서 사용가능한 메서드이며, 이것 또한 asynchrnous 함수로서, 새로운 promise를 리턴한다. (조나스가 이해할 수 없는 부분.. 그냥 받아들이자)
+      // 새로운 Promise를 핸들링하기 위해 또다른 then()를 불러올 수 있다.
+    )
+    .then(function (data) {
+      console.log(data);
+      renderCountry(data[1]); // data = response.json() >>> body 부분의 데이터를 받음. [{...}] => array안에 하나의 데이터만 있으므로, [0]을 붙여준다.
+      //
+    });
+};
+// getCountryData2('korea'); // [{...}, {...}] => [{북한}, {남한}]
+
+// 1. fetch: return a new Promise
+// 2. then: to handle a Promise from Fetch API
+// 3. json(): to read actual data from body of the resolved data & also return a new Promise
 
 // ✅ Detailed version
 /*
@@ -210,16 +228,42 @@ const getCountryData = function (country) {
 // then 메서드 또한 새로운 프라미스를 리턴한다! (이때, 실제로 리턴할지 말지는 상관 ❌)
 // 만약 값을 리턴하면, 그 밸류는 리턴되는 프라미스의 Fulfillment value가 될 것 => 🥒
 
-// 👉 어쨌든 우리가 알아야 할 것은 then() 메서드는 새로운 promise를 리턴하기 때문에,
-// then() 상에서 계속해서 원하는 데이터를 끝까지 받아내기 위해 then()를 줄줄이 소시지처럼
-// 원하는만큼 쓸 수 있다는 것!!
+// 👉 어쨌든 우리가 알아야 할 것은 then() 메서드는 새로운 promise를 리턴하기 때문에, then() 상에서 계속해서 원하는 데이터를 끝까지 받아내기 위해 then()를 줄줄이 소시지처럼 원하는만큼 쓸 수 있다는 것!!
 // 만약 우리가 어떤 나라의 이웃의 이웃의 이웃을 알고 싶다면, 이런식으로 계속해서 모든 Promise들의 chaining을 통해 최종적으로 원하는 데이터를 끄집어 낼 수 있다!
 // Instead of callback hell, we have what we call a flat chain of promises. (very easy to understand and read..)
 // 콜백헬은 콜백함수 안에 또다른 콜백함수, 그 안에 또 콜백함수...가 계속 반복되는 구조인데,
-// 여기서는 그냥 플랫하게! 누구 하나 종속되는 관계가 아닌, then() 메서드가 new Promise를 리턴하는 것을 이용해 계속해서 데이터 값을 뽑아내고 있다.
+// 여기서는 그냥 플랫하게! 누구 하나 종속되는 관계가 아닌, ✨then() 메서드가 new Promise를 리턴하는 것✨을 이용해 계속해서 데이터 값을 뽑아내고 있다.
 // Always return Promise and handle it outside by simply continuing the chain like this.
 
+// 어떤 컨트리를 뽑아냄과 동시에 그의 negihbour 컨트리를 같이 뽑아내고 싶을 때...
+// => callback function 사용 해야 함!!
+// 더 나아가 만약에 이웃의 이웃의 이웃까지 뽑아내고 싶다면, 계속해서 Then()를 사용해 뻗어나가면 됨!
+// 🍀 10/9 복습
+const getCountryData3 = function (country) {
+  // Country 1
+  fetch(`https://restcountries.com/v2/name/${country}`)
+    .then(response => response.json())
+    .then(data => {
+      renderCountry(data[1]);
+
+      // Country 2
+      const neighbour = data[0].borders[0];
+      if (!neighbour) return;
+      return fetch(`https://restcountries.com/v2/alpha/${neighbour}`);
+    })
+    .then(response => response.json())
+    .then(data => renderCountry(data, 'neighbour'))
+    .catch(err => alert(err)) // then()에서 에러를 다루는 것보다 프로미스 체인 어디서 발생한 에러이든 전역적으로 캐치할 수 있는 catch()하나 써주는게 이득!! & catch() also returns a new Promise.
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    }); // so we can use finally() after catch() on which return a new Promise.
+};
+console.log(getCountryData3('korea'));
+
 // 🍅 256. Throwing Errors Manually
+// 아래처럼 catch()와 특정 에러 메시지를 throw 키워드를 사용해 설정하는 것은 매우 좋지만, 함수를 만들 때마다 이러한 긴 코드를 작성하는 것은 bad practice!
+// 이럴땐 맨날 하던듯이 또다른 함수로 빼서 그 함수를 불러오도록 하자...
+// getCountryDataCopy 함수 주목!
 const getJSON = function (url, errorMsg = 'Something went wrong') {
   return fetch(url).then(response => {
     if (!response.ok) {
@@ -229,87 +273,80 @@ const getJSON = function (url, errorMsg = 'Something went wrong') {
   });
 };
 
-const getCountryData = function (country) {
-  // ✨Country 1✨
-  //   fetch(`https://restcountries.com/v2/name/${country}`)
-  //     .then(
-  //       response => {
-  //         /*
-  //         console.log(response); // response.ok = false로 설정되어 나옴. (status: 404이기 때문..) => 이 경우에, 특정 에러메시지가 출력되도록 매뉴얼리하게(직접) 설정해주자!
-
-  //         if (!response.ok) {
-  //           throw new Error(`Country not found (${response.status})`);
-  //         } // new Error(): create a new error
-  //         // throw keyword: immediately terminate the current function (=return)
-  //         // 💫 중요한 개념:
-  //         // then 메서드 안에 error를 만들어 throw하게 되면, 즉시 promise를 reject한다.
-  //         // 그리고 이러한 Rejection은 catch()를 만날 때까지 아래로 쭉 전파되게 되고,
-  //         // catch를 만나는 순간, 이 캐치 핸들러가 throw에 의해 리턴된 에러메시지를 캐치하여
-  //         // 자신의 ${err.message} 부분에 넣어 함께 출력한다.
-  //         // 그래서 여기서 아래와 같은 메시지가 보이는 것!! (*status = 404)
-  //         // Something went wrong💥💥 Country not found (404). Try again!
-
-  //         // 💫 또 중요한 개념:
-  //         // 이미 배운 개념이긴 한데, 여기서 응용해보자면, catch메서드는 이전에 어느 then()의 결과에서든 에러가 발생하면, 그 에러를 캐치하여 자신의 매개변수에 적용시켜 출력할 수 있다고 배웠다..(🧚‍♀️ 부분 참고) 따라서 여기서 if(!response.ok)~ 절을 지우고 화면을 확인해보면, 더 이상 위와 같은 에러메시지가 아닌, err.message 부분이 flag 에러 관련한 메시지로 바뀌어 나타나게 된다. (중간에 어느 then인지는 모르겠으나 어쨌든 어느 then 메서드로부터 flag 속성을 읽으려다가, undefined인 것을 확인하여 에러가 발생했겠지! 하고 생각할 수 있겠다.)
-  //         // Something went wrong💥💥 Cannot read properties of undefined (reading 'flag'). Try again!
-
-  //         return response.json();
-  //         */
-  //       }
-  //       //   err => alert(err) // 🧞‍♂️ fetch될 때 발생하는 에러만 핸들링!
-  //     )
-  getJSON(`https://restcountries.com/v2/name/${country}`, 'Country not found')
-    // 👉 getJSON()함수로, fetch() + error 핸들링을 위한 코드 를 한군데 묶은 함수를 외부에 하나 만들어, 장황하게 작성한 코드를 짧게 줄여줬음!! 별거 없다!!🍞
+// 🍀 getCountryData와 동일한데, 위의 getJSON함수 이용한 version.
+const getCountryDataCopy = function (country) {
+  // Country 1
+  // example 1) getCountryData('dsdflsfjaslj');
+  // => 유저에게 Country not found라는 오류 메시지를 보이도록...
+  getJSON(`https://restcountries.com/v2/name/${country}`, 'Country Not Found')
     .then(data => {
-      console.log(data);
-      renderCountry(data[0]);
-      const neighbour = data[0].borders?.[0];
-      console.log(neighbour);
+      renderCountry(data[1]);
 
-      // Ex) australia같은 경우, 이웃 나라가 하나도 없다는 것을 활용해,
-      // 에러메시지가 유저입장에서 이해가능하도록 출력되는지 체크해보자.
-      // 아래 코드로 작성하면 캐치 핸들러에 의해 에러메시지가 캐치되어
-      // Something went wrong💥💥 Cannot read properties of undefined (reading 'flag'). Try again!
-      // 이렇게 출력된다... 이 에러메시지는 유저 입장에서 봤을 때, 이해하기 어려운 에러미시지!!
-      // 우리는 이웃나라가 있는지 없는지 Flag 속성을 읽으면서 판단하여서 이런식으로 나타난 것!(우리 개발자 입장에서만 이해가능.)
-      // -> 따라서 유저 친화적인 에러메시지를 매뉴얼리하게 세팅해줄 필요성✅
-      // 🍞🧈 이 코드는 지금 아무런 역할 하지 못하는중.
-      //   if (!neighbour) return;
-
-      // 👉 에러 메시지를 매뉴얼리하게 뿌려주어 밑에 catch()핸들러가 이 메시지를 캐치하여
-      // 출력할 수 있도록 throw키워드를 사용해 에러메시지를 전달해준다.
-      // => 유저 입장에서 더 이해가 가는 real 에러메시지.. UX quality ⬆️
+      const neighbour = data[0].borders[0];
+      // example 2) getCountryData('australia');
+      // => 호주같이 주변 이웃국가가 없는 경우(neighbour = undefined), 이 경우에도 역시 cannot read property 'flag' of undefined라고 뜨는데, 이것보단 유저에게 직관적으로 에러를 알릴 수 있는 다음과 같은 에러메시지("No neighbour found!")를 제공하는 것이 훨씬 좋다.
       if (!neighbour) throw new Error('No neighbour found!');
-      // 👉 Something went wrong💥💥 No neighbour found!. Try again! 로 출력
-      // 유저들이 이해하기 쉽다 :)
 
-      // ✨Country 2 (Neighbour country)✨
-      //   return fetch(`https://restcountries.com/v2/alpha/${neighbour}`);
+      // Country 2
       return getJSON(
         `https://restcountries.com/v2/alpha/${neighbour}`,
-        'Country not found' // 에러가 발생하는 이유를 정확히 설명해주는 메시지를 직접 만들어서 보내줄 필요성이 있다고 판단되어 위에서 throw new Error()을 사용해 만들어준 것.
+        'Country Not Found'
       );
-      // 🍞 getJSON() 함수로 아래 then()메서드 써줄 필요 ❌
-      //  return 23;
+      // cannot read property 'flag' of undefined
     })
-    // .then(response => {
-    //   if (!response.ok)
-    //     throw new Error(`Country not found (${response.status})`);
-    //   return response.json();
-    // }) // 🍞
-    // 만약에 위의 Fetch()에서 에러가 났다면? 그 다음에 오는 Then()에 throw new Error() 써줘야된다.. => Bad Pracitce라는 걸 알지만, 일단 써준다.
-    // => 우리는 이렇게 반복되는, 매뉴얼리하게 작성해줘야 하는 불편함을 없애기 위해 에러 핸들링만을 위한 함수를 하나 빼서 만들 것이다. (=> getJSON 🍅)
+    .then(response => response.json())
     .then(data => renderCountry(data, 'neighbour'))
     .catch(err => {
-      console.log(`💥💥 ${err} 💥💥`);
+      console.log(`${err} 💥💥💥`);
       renderError(`Something went wrong💥💥 ${err.message}. Try again!`);
-    }) // 🧚‍♀️ this catch method will catch any errors that occur in any place in this whole promise chain.
-    .finally(() => (countriesContainer.style.opacity = 1)); // promise가 리젝트되든, 풀필되든 간에 항상 실행되는 공통실행코드! (catch() 또한 promise를 리턴했기 때문에 chinable하게 가능)
-  // .then(data => alert(data)); // 🥒 23이 리턴됐으므로, data = 23, alert(23)
+    })
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    });
 };
 
-// ✨Test Area✨
-// getCountryData('germany');
+// 🍀 10/9 복습
+// Always use catch! (if necessary, use finally())
+// : 에러메시지는 유저들한테 별로 중요하지도 않아 보이는데, 이렇게까지 해야하나??
+// 1. 이렇게 에러를 핸들링하는 것은 유저에게 적절한 에러메시지를 보여주는 유일한 방법이다. (유저들은 어떤 부분에서 오류가 났는지 알아야한다!!)
+// 2. rejected promises들에 대해 아무런 조치를 취하지 않고, 내비두는 것은 매우 좋지 않은 프랙티스다.
+const getCountryData = function (country) {
+  // Country 1
+  fetch(`https://restcountries.com/v2/name/${country}`)
+    .then(response => {
+      console.log(response);
+      if (!response.ok) throw new Error(`Country not found ${response.status}`);
+      // 👉 throw : immediatley terminate the current function and will propagate down to the catch method.. => 현재 함수는 즉시 종결되고, ${err.message} 부분에 삽입되어 출력됨. => 우리가 원하는 에러메시지 매뉴얼리하게 출력 가능!!
+      return response.json();
+    })
+    .then(data => {
+      renderCountry(data[1]);
+
+      const neighbour = data[0].borders[0];
+      if (!neighbour) return;
+
+      // Country 2
+      return fetch(`https://restcountries.com/v2/alpha/${neighbour}`);
+    })
+    .then(response => response.json())
+    .then(data => renderCountry(data, 'neighbour'))
+    .catch(err => {
+      console.log(`${err} 💥💥💥`);
+      renderError(`Something went wrong💥💥 ${err.message}. Try again!`);
+    }) // then()에서 에러를 다루는 것보다 프로미스 체인 어디서 발생한 에러이든 전역적으로 캐치할 수 있는 catch()하나 써주는게 이득!! & catch() also returns a new Promise.
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    }); // so we can use finally() after catch() on which return a new Promise.
+};
+
+// 🍀 ex1) 에러메시지가 잘 작동하는지 테스트해보기 (유저친화적인 에러메시지를 매뉴얼리하게 설정할 수 있는 방법 배움.)
+// getCountryData('dsdflsfjaslj');
+// (🚨) Something went wrong💥💥 "Cannot read property 'flag' of undefined" Try again!
+// 이건 ❌true error❌가 아니다!! (this happens our API cannot find any country)
+// => 에러가 발생한 이유는, 우리의 API가 다음과 같은 country name('dsdflsfjaslj')을 찾지 못했다는 점에서 발생한건데, 엉뚱하게 다른 원인 때문에 발생했다고 지껄임! => 이러한 이유는 fetch promise가 rejected되지 않고, 그냥 Fulfilled된 상태로 남게되는 동작원리 때문...(왜이렇게 동작하는지 모름, 조나스도 의문)
+
+// 참고로, 컨솔창에 GET ~~~~코드에서 404도 위의 에러와 같이 뜨는데, 이 404가 country name을 찾지 못했다는 점을 Reflected하고 있음... 근데 이 404는 fetch promise에서 여전히 Fulfilled된 상태를 뜻하기 때문에 위의 cannot read property 'flag' of undefined로 나온것.
+// 🎃 우리는 유저에게 이 이름이 👉정확한 나라이름이 아니라는👈 에러메시지를 전달하고 싶기 때문에 이걸 핸들링할 수 있는 개념을 배울 예정.
 
 // ⭐️ 255. Handling Rejected Promises (= how to handle error, pretty common scenario when we work with Promsie and especially with AJAX calls)
 
@@ -325,20 +362,28 @@ const getCountryData = function (country) {
 //     response => response.json(),
 //     err => alert(err)
 //   )
+// ✅ 깡쌤한테 배운 것
+function myFun3(num) {
+  // retrun new Promise(깡쌤) = fetch API (조나스)
+  return new Promise((resolve, reject) => {
+    if (num > 0) resolve(num * num);
+    else reject('0보다 큰수를 지정하세요..');
+  }).then(
+    value => console.log(`result : ${value}`), // will be only executed when the promise was fulfilled, so for successful promise.
+    error => console.log(error) // => will be executed when the promise was rejected.
+  );
+}
+myFun3(10); // ⬆️ result : 100
+myFun3(-1); // ⬆️ 0보다 큰수를 지정하세요..
 
 // 2) 🧚‍♀️더 나은 방법이 존재함🧚‍♀️
+// 위의 then()에서 에러를 캐치하는 것은, 한 함수 내에서 글로벌리하게 에러를 캐치할 수 가 없으므로, 마지막에 catch() 하나만을 이용해 전역적으로 에러메시지를 핸들링할 수 있는 것이 코드 가독성면에서도 굿.
 // then()의 매개변수로 추가하는 것이 아닌, catch()메서드를 사용하는 것!
 btn.addEventListener('click', function () {
   getCountryData('germany');
 });
 
-getCountryData('australia');
-// 🚨 "Cannot read property 'flag' of undefined" => ❌true error❌
-// => our API cannot find any country
-// 에러가 발생한 이유는, 우리의 API가 다음과 같은 country name을 찾지 못했다는 점에서 발생한건데, 엉뚱하게 다른 원인 때문에 발생했다고 지껄임! => 이러한 이유는 fetch promise가 rejected되지 않고, 그냥 Fulfilled된 상태로 남게되는 동작원리 때문...(왜이렇게 동작하는지 모름, 조나스도 의문)
-
-// 또한, 컨솔창에 GET ~~~~코드에서 404도 위의 에러와 같이 뜨는데, 이 404가 country name을 찾지 못했다는 점을 Reflected하고 있음... 근데 이 404는 fetch promise에서 여전히 Fulfilled된 상태를 뜻하기 때문에 위의 cannot read property 'flag' of undefined로 나온것.
-// 🎃 우리는 유저에게 이 이름이 👉정확한 나라이름이 아니라고👈 말해주고 싶기 때문에 이걸 핸들링할 수 있는 개념을 다음 시간에 배울 예정.
+// getCountryData('australia');
 
 // <10/8 깡쌤 오버뷰>
 // ✅ 세션스토리지 - '창' 단위로 저장, 영속적이지 않아 창이 닫히면 데이터도 같이 사라진다.
@@ -354,3 +399,35 @@ getCountryData('australia');
 // 근데 fetch 함수는 이 경우에도 reject되지 않고, 오히려 fulfilled된 상태이다!
 // 상식대로라면 fetch()함수의 결과를 얻지 못하면 바로 리젝되야 하는게 맞다고 생각되지만,
 // 현실은 그렇지 않다..ㅎ => 💥우리가 매뉴얼리하게 핸들링해줘야 하는 부분!!!💥
+
+///////////////////////////////////////////////////
+// Coding challenge #1
+// * My api key: 428256506246586962931x104466
+
+// ⭐️ Use the fetch API and promises to get the data.
+const whereAmI = function (lat, lng) {
+  fetch(
+    `https://geocode.xyz/${lat},${lng}?geoit=json&auth=428256506246586962931x104466;`
+  )
+    .then(response => {
+      if (!response.ok)
+        throw new Error(
+          `You're loading too fast! (${response.status}) Too many requests, Try again later.`
+        );
+      return response.json();
+    })
+    .then(data => {
+      const city = `${data.city[0]}${data.city.slice(1).toLowerCase()}`;
+      console.log(`You are in ${city}, ${data.country}`);
+    })
+    .catch(error => console.log(error));
+};
+// Response {body : ReadableStream, headers: Headers, ok: true, status: 200 ...}
+
+// ⭐️ Test Data
+whereAmI(52.508, 13.381);
+// You are in Mumbai, India
+whereAmI(19.037, 72.873);
+// You are in Berlin, Germany
+whereAmI(-33.933, 18.474);
+// You are in Cape town, South Africa
