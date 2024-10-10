@@ -440,13 +440,11 @@ Promise.resolve('Resolved promise 1').then(res => console.log(res));
 // 👉 microtasks queue.. -> should be executed first than the callback in just regular callback queue.
 
 // 오랜 시간 걸리는 micro-task(Promise)를 만들어놓으면, timer가 아무리 0초 후에 실행되어야 하는 코드라도, 딜레이 되기 마련! => 무조건 Micro-task가 끝난 다음에 실행된다.
-Promise.resolve('Resolved promise 2').then(res => {
-  for (let i = 0; i < 10000; i++) {
-    console.log(res);
-  }
-});
-
-console.log(res);
+// Promise.resolve('Resolved promise 2').then(res => {
+//   for (let i = 0; i < 10000; i++) {
+//     console.log(res);
+//   }
+// });
 console.log('Test end');
 
 // Code outside of any callbacks will run first!
@@ -455,3 +453,72 @@ console.log('Test end');
 // Test end
 // Resolved promise 1 => microtask는 일반 콜백 함수보다 먼저 실행되는게 원칙 ㅎㅎ
 // 0 sec timer => No guarantee..
+
+// 260. Building a Simple Promise
+// promise constructor이 실행되자마자, 두 개의 매개변수를 받는 executor function을 실행시킨다.
+// 이 executor function은 프로미스로 처리할 비동기적인 업무를 포함한다. => 값을 리턴한다.
+const lotteryPromise = new Promise(function (resolve, reject) {
+  console.log(`Lottery draw is happening 🔮`);
+
+  // 📌 Promisifying the setTimeout function (1)
+  // Timer: we did actually encapsulate some asynchronous behavior into this Promise. This is how we encapsulate any asynchronous behavior into a promise!
+  // we usually only build promises to wrap old callback based functions into promises. => This is a process that we call promisifying.
+  // 💫 Promisifying: convert "callback based" asynchronous behavior to "promise based".
+  // 콜백 베이스의 비동기 동작을 Promise로 변환하면 좀 더 직관적이고 코드 흐름을 관리하기 쉬워집니다. 이를 Promisify 한다고 하며, 주로 콜백 헬(callback hell)을 방지하고, 코드를 더 가독성 있게 만들기 위해 사용됩니다.
+  setTimeout(function () {
+    if (Math.random() >= 0.5) {
+      // To set the promise as fulfilled, we use resolve function.
+      // resolve에 들어가는 변수는 무조건 promise의 결과값이 될 것. 이는 then()으로 핸들 가능.
+      resolve('You WIN 💰');
+    } else {
+      reject('You lost your money 💩');
+    }
+  }, 2000);
+});
+
+// we created an executor function which is gonna be called by this promise constructor as soon as it runs.
+// The promise calls this executor function and passes in the resolve and reject functions so that we can then use them to mark the promise as either resolved so as fulfilled or as to rejected.
+// The promise is gonna move to either fulfilled state or rejected state.
+
+// 👉 Consuming the promise
+lotteryPromise.then(res => console.log(res)).catch(err => console.error(err));
+// resolve() => 매개변수에 해당하는 부분이 then의 매개변수로.. (=res)
+// reject() => 매개변수에 해당하는 부분이 catch의 매개변수로.. (=err)
+// Promisifying의 장점:
+// 콜백 헬 방지: 여러 개의 비동기 작업을 중첩된 콜백으로 처리하다 보면 코드가 지저분해지고 유지보수가 어려워집니다. 이를 Promise로 변환하면 .then() 체인을 사용하여 코드를 더 깔끔하게 유지할 수 있습니다.
+// 에러 처리 개선: 콜백 함수에서는 에러 처리가 어렵지만, Promise를 사용하면 .catch()를 통해 쉽게 에러를 처리할 수 있습니다.
+
+// 📌 Promisifying the setTimeout function (2)
+const wait = function (seconds) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, seconds * 1000); // resolve = callback function을 Promise의 매개변수(=resolve)로 활용한 것.
+  });
+};
+
+wait(2)
+  .then(() => {
+    console.log('I waited for 2 seconds');
+    return wait(1);
+  })
+  .then(() => console.log('I waited for 1 second'));
+
+// 위의 then()를 사용하면 아래처럼 콜백헬에 빠지지 않고, 가독성 떨어지는 나쁜 코드 작성을 피할 수 있다. + nice sequence of asynchronous behavior를 가지는 코드를 짤 수 있다!!
+/*
+setTimeout(() => {
+  console.log('1 second passed');
+  setTimeout(() => {
+    console.log('2 second passed');
+    setTimeout(() => {
+      console.log('3 second passed');
+      setTimeout(() => {
+        console.log('4 second passed');
+      }, 1000);
+    }, 1000);
+  }, 1000);
+}, 1000);
+*/
+
+Promise.resolve('abc').then(x => console.log(x));
+Promise.reject('abc').catch(x => console.error(x));
+// This is how we built our own promises and how we promisify
+// a very simple callback based asynchronous behavior function such as setTimeout.
