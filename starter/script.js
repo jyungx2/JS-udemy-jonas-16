@@ -258,8 +258,9 @@ const getCountryData3 = function (country) {
       countriesContainer.style.opacity = 1;
     }); // so we can use finally() after catch() on which return a new Promise.
 };
-console.log(getCountryData3('korea'));
+// console.log(getCountryData3('korea'));
 
+/*
 // 🍅 256. Throwing Errors Manually
 // 아래처럼 catch()와 특정 에러 메시지를 throw 키워드를 사용해 설정하는 것은 매우 좋지만, 함수를 만들 때마다 이러한 긴 코드를 작성하는 것은 bad practice!
 // 이럴땐 맨날 하던듯이 또다른 함수로 빼서 그 함수를 불러오도록 하자...
@@ -304,12 +305,14 @@ const getCountryDataCopy = function (country) {
       countriesContainer.style.opacity = 1;
     });
 };
+*/
 
 // 🍀 10/9 복습
 // Always use catch! (if necessary, use finally())
 // : 에러메시지는 유저들한테 별로 중요하지도 않아 보이는데, 이렇게까지 해야하나??
 // 1. 이렇게 에러를 핸들링하는 것은 유저에게 적절한 에러메시지를 보여주는 유일한 방법이다. (유저들은 어떤 부분에서 오류가 났는지 알아야한다!!)
 // 2. rejected promises들에 대해 아무런 조치를 취하지 않고, 내비두는 것은 매우 좋지 않은 프랙티스다.
+/*
 const getCountryData = function (country) {
   // Country 1
   fetch(`https://restcountries.com/v2/name/${country}`)
@@ -338,6 +341,7 @@ const getCountryData = function (country) {
       countriesContainer.style.opacity = 1;
     }); // so we can use finally() after catch() on which return a new Promise.
 };
+*/
 
 // 🍀 ex1) 에러메시지가 잘 작동하는지 테스트해보기 (유저친화적인 에러메시지를 매뉴얼리하게 설정할 수 있는 방법 배움.)
 // getCountryData('dsdflsfjaslj');
@@ -379,9 +383,9 @@ myFun3(-1); // ⬆️ 0보다 큰수를 지정하세요..
 // 2) 🧚‍♀️더 나은 방법이 존재함🧚‍♀️
 // 위의 then()에서 에러를 캐치하는 것은, 한 함수 내에서 글로벌리하게 에러를 캐치할 수 가 없으므로, 마지막에 catch() 하나만을 이용해 전역적으로 에러메시지를 핸들링할 수 있는 것이 코드 가독성면에서도 굿.
 // then()의 매개변수로 추가하는 것이 아닌, catch()메서드를 사용하는 것!
-btn.addEventListener('click', function () {
-  getCountryData('germany');
-});
+// btn.addEventListener('click', function () {
+//   getCountryData('germany');
+// });
 
 // getCountryData('australia');
 
@@ -403,7 +407,7 @@ btn.addEventListener('click', function () {
 ///////////////////////////////////////////////////
 // Coding challenge #1
 // * My api key: 428256506246586962931x104466
-
+/*
 // ⭐️ Use the fetch API and promises to get the data.
 const whereAmI = function (lat, lng) {
   fetch(
@@ -431,6 +435,7 @@ whereAmI(19.037, 72.873);
 // You are in Berlin, Germany
 whereAmI(-33.933, 18.474);
 // You are in Cape town, South Africa
+*/
 
 // 259. Event Practice
 console.log('Test start');
@@ -454,6 +459,7 @@ console.log('Test end');
 // Resolved promise 1 => microtask는 일반 콜백 함수보다 먼저 실행되는게 원칙 ㅎㅎ
 // 0 sec timer => No guarantee..
 
+/*
 // 260. Building a Simple Promise
 // promise constructor이 실행되자마자, 두 개의 매개변수를 받는 executor function을 실행시킨다.
 // 이 executor function은 프로미스로 처리할 비동기적인 업무를 포함한다. => 값을 리턴한다.
@@ -501,6 +507,7 @@ wait(2)
     return wait(1);
   })
   .then(() => console.log('I waited for 1 second'));
+*/
 
 // 위의 then()를 사용하면 아래처럼 콜백헬에 빠지지 않고, 가독성 떨어지는 나쁜 코드 작성을 피할 수 있다. + nice sequence of asynchronous behavior를 가지는 코드를 짤 수 있다!!
 /*
@@ -519,6 +526,78 @@ setTimeout(() => {
 */
 
 Promise.resolve('abc').then(x => console.log(x));
-Promise.reject('abc').catch(x => console.error(x));
+// Promise.reject('abc').catch(x => console.error(x));
 // This is how we built our own promises and how we promisify
 // a very simple callback based asynchronous behavior function such as setTimeout.
+
+// 261. Promisifying the Geolocation API
+// This is very clearly a callback(we have to pass in these 2 different callbacks like position, err) based API.
+// => 이것을 promise를 이용해 callback based -> promise based API로 promisify해보자!!
+navigator.geolocation.getCurrentPosition(
+  position => console.log(position),
+  err => console.error(err)
+);
+console.log('Getting position');
+// 👉 geolocation API는 브라우저의 web APIs environment으로 offloaded되어 실행되기 때문에, 'Getting position'이 먼저 출력된다.
+
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    navigator.geolocation.getCurrentPosition(
+      position => resolve(position), // 함수의 목적이 getPosition이므로, 결과값을 받는데 성공했다면, 유저의 position 밸류를 얻었다는 뜻이므로, resolve()로 successful value를 리턴.
+      err => reject(err)
+    );
+  });
+};
+
+// ✨ Upgrade version ✨
+const getPosition2 = function () {
+  return new Promise(function (resolve, reject) {
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
+};
+// callback hell을 피하기 위해 promise를 사용할 것이고, 결과 데이터를 마치 콜백함수를 쓴 것처럼, 쓴것과 동일한 효과를 내지만, 코드의 가독성과 유지보수성을 높이는 방향으로 작성할 수 있도록 하기 위해 then 메서드를 활용할 것이다.
+// 이때 Promise의 콜백함수의 매개변수로서 쓰이는 또 다른 콜백함수인 resolve나 reject를 분명히 명시해줘야 한다. 만약 명시를 안해준다면, 해당 프라미스는 영원히 펜딩상태로 남아 어떠한 결과 값도 반환할 수 없게 된다. 이말은, 이 프라미스를 내포한 함수상에서 then(), catch(), finally() 아무 메서드도 사용할 수 없게 된다.(성공적인 값, 실패한 값 모두 반환하지 않기 떄문)
+// 왜냐면 일단 프라미스의 상태가 fulfilled or rejected됐냐에 따라 then(), catch()로 전달되는 값이 정해지기 때문에, 무조건 이 둘은 명시해줘야 하고, then()이 fulfilled promise, 성공적인 데이터를 바로 받아오는 역할, catch()가 단순히 이러한 resolve, reject라는 콜백함수가 있다 정도만 명시해준 것!
+// 따라서 우리는 resolve, reject를 프라미스 내부에서 무조건 명시해줄 필요가 있고, 프라미스가 rejected된 상태가 되어 결과값을 제대로 반환하지 못했을 때는 에러사항을 전역적으로 캐치할 수 있는 catch 메서드를 사용하면 reject에 의해 전달된 에러사항이 catch()로 전해지면서 콜백함수가 정상적으로 실행되게 되고, 반대로 fulfilled된 상태가 되어 결과값을 성공적으로 받았을 때는 Catch()가 아닌, then()에 명시된 콜백함수가 실행되게 된다.
+
+getPosition2().then(pos => console.log(pos));
+
+const whereAmI = function () {
+  getPosition2()
+    .then(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      return fetch(
+        `https://geocode.xyz/${lat},${lng}?geoit=json&auth=428256506246586962931x104466;`
+      );
+    })
+    .then(response => {
+      console.log(response);
+      if (!response.ok)
+        throw new Error(`Problem with geocoding (${response.status})`);
+      return response.json();
+    })
+    .then(data => {
+      console.log(data);
+      const city = `${data.city[0]}${data.city.slice(1).toLowerCase()}`;
+      console.log(`You are in ${city}, ${data.country}`);
+
+      // 새로운 API 활용
+      return fetch(`https://restcountries.com/v2/name/${data.country}`); // 🚨
+    })
+    .then(res => {
+      if (!res.ok) throw new Error(`Country not found! (${res.status})`);
+      return res.json();
+    })
+    .then(data => renderCountry(data[0]))
+    .catch(err => console.error(`${err.message} 💥`));
+};
+
+btn.addEventListener('click', whereAmI);
+// 위의 함수를 오직 콜백함수들로만 작성했다고 생각해봐라.. 머리 터진다!!!!🤯🤯🤯
+
+whereAmI(52.508, 13.381);
+// You are in Mumbai, India
+// whereAmI(19.037, 72.873);
+// You are in Berlin, Germany
+// whereAmI(-33.933, 18.474);
+// You are in Cape town, South Africa
