@@ -431,3 +431,27 @@ whereAmI(19.037, 72.873);
 // You are in Berlin, Germany
 whereAmI(-33.933, 18.474);
 // You are in Cape town, South Africa
+
+// 259. Event Practice
+console.log('Test start');
+setTimeout(() => console.log('0 sec timer'), 0); // 👉 callback queue..
+// .resolve() allows us to build a promise, so to create a promise that is immediately resolved(one that has a successful value). => fuilfilled, success value is gonna be '매개변수' of resolve() method.
+Promise.resolve('Resolved promise 1').then(res => console.log(res));
+// 👉 microtasks queue.. -> should be executed first than the callback in just regular callback queue.
+
+// 오랜 시간 걸리는 micro-task(Promise)를 만들어놓으면, timer가 아무리 0초 후에 실행되어야 하는 코드라도, 딜레이 되기 마련! => 무조건 Micro-task가 끝난 다음에 실행된다.
+Promise.resolve('Resolved promise 2').then(res => {
+  for (let i = 0; i < 10000; i++) {
+    console.log(res);
+  }
+});
+
+console.log(res);
+console.log('Test end');
+
+// Code outside of any callbacks will run first!
+// <실행 결과>
+// Test start
+// Test end
+// Resolved promise 1 => microtask는 일반 콜백 함수보다 먼저 실행되는게 원칙 ㅎㅎ
+// 0 sec timer => No guarantee..
