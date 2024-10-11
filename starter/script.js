@@ -530,6 +530,7 @@ Promise.resolve('abc').then(x => console.log(x));
 // This is how we built our own promises and how we promisify
 // a very simple callback based asynchronous behavior function such as setTimeout.
 
+/*
 // 261. Promisifying the Geolocation API
 // This is very clearly a callback(we have to pass in these 2 different callbacks like position, err) based API.
 // => 이것을 promise를 이용해 callback based -> promise based API로 promisify해보자!!
@@ -601,9 +602,11 @@ whereAmI(52.508, 13.381);
 // You are in Berlin, Germany
 // whereAmI(-33.933, 18.474);
 // You are in Cape town, South Africa
+*/
 
 ////////////////////////////////////////////////////////////////////
-// Coding Challenge #2
+// 262. Coding Challenge #2
+/*
 const imageContainer = document.querySelector('.images');
 
 const createImage = function (imgPath) {
@@ -648,3 +651,47 @@ createImage('./img/img-1.jpg')
     currentImg.style.display = 'none';
   })
   .catch(err => console.error(err));
+*/
+
+// 263. Consuming promises with Async/Await
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    navigator.geolocation.getCurrentPosition(resolve, reject);
+  });
+};
+
+// 🤯 선생님과 다르게 브라우저 상에 카드가 안뜬다 ㅠㅠㅠ
+const whereAmI = async function (country) {
+  // Geolocation
+  const pos = await getPosition();
+  const { latitude: lat, longitude: lng } = pos.coords;
+
+  // Reverse geocoding
+  const resGeo = await fetch(
+    `https://geocode.xyz/${lat},${lng}?geoit=json&auth=428256506246586962931x104466`
+  );
+  const dataGeo = await resGeo.json();
+  console.log(dataGeo);
+
+  // Country data
+  const res = await fetch(`https://restcountries.com/v2/name/${country}`);
+  console.log(res);
+  // => LOOKS LIKE an any "synchronous" code!!
+  // ... We had to mess with callback function (Callback hell)
+  // ... or consume promises with then method.
+  // => But now, with async and await, it's become EASIER TO READ AND UNDERSTAND!!
+
+  // 위의 코드 두 줄은 아래 코드 세 줄과 동일. 훨씬 간단하지??
+  //   fetch(`https://restcountries.com/v2/name/${country}`).then(res =>
+  //     console.log(res)
+  //   );
+
+  const data = await res.json();
+  console.log(data);
+  renderCountry(data[0]);
+};
+// await: use this keyword to wait for the result of the "promise". >> await will stop the code execution at this point of the function until the promise is fulfilled.
+// ❓Isn't it stopping the code or blocking the execution?
+// => Not at all! This function is running asynchronously in the background..(So the ✨console.log('FIRST')✨ is not blocked by whereAmI. code will move onto the next line without blcoking of main thread.) So it's not blocking the call stack or main thread of execution. => 겉으로는 일반 함수처럼 보이지만, 사실은 비동기적으로 처리되는 함수이다.. async-await이 매우 특별한 이유..
+whereAmI();
+console.log('FIRST'); // ✨
