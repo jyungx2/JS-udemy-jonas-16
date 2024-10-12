@@ -855,3 +855,51 @@ console.log(`1: Will get location`); // -> 1
 })(); // 세미콜론 필요
 
 console.log(`3: Finished getting location`); // -> 2
+
+// 266. Running Promises in Parellel
+const get3Countries = async function (c1, c2, c3) {
+  // Always use try-catch block when you're using async function to work with HTTP communication.
+  // ✅ async 함수 내부에서 발생한 모든 에러를 캐치할 수 있도록...
+  // ✅ then(), catch() 체인 대신 async/await과 try-catch를 사용하면 코드가 더 직관적이고 읽기 쉬워지므로...
+
+  // 💥 다만, 모든 상황에서 반드시 사용해야 하는 것은 아니며, 일반적으로 권장되며, 필요에 따라 적절하게 사용하는 것이 좋다.
+  // 👉 간단한 HTTP 통신에서는 굳이 try-catch를 사용하지 않고, then()과 catch() 체인을 사용할 수 있습니다.
+  // 👉 에러를 특별히 처리하지 않아도 되는 경우는 에러 처리를 생략할 수도 있습니다
+  try {
+    // This doesn't make so much sense!!
+    // 여기서 우리는 ajax call들을 서로가 서로에게 영향을 받지 않음에도 불구하고,
+    // 하나가 끝나면 하나를 부르고, 또 하나가 끝나면 하나를 차례대로 부르고 있다.
+    // => 이 얼마나 비효율적인 방식인가? 유저입장에서 데이터를 충분히 한번에 받을 수 있음에도 불구하고,
+    // 그냥 하나하나씩 천천히 차례대로 받고 있는 셈이다. (데이터 통신에서 1초는 매우 긴 시간이다..)
+    // -> Why should the second Ajax call wait for the first one?!
+    // 🖍️Inspect - Network - Waterfall 부분을 보면, 데이터들이 차례대로 받아와지는 것을 확인할 수 있음.
+
+    // Instead of running these promises in sequence, we can actually run them in parellel!
+    // so all at the same time, so then we can save valuable loading time, making these 3 basically load at the same time.
+    ////////////////////////////////////////////////////////////////////////////
+    // const [data1] = await getJSON(`https://restcountries.com/v2/name/${c1}`);
+    // const [data2] = await getJSON(`https://restcountries.com/v2/name/${c2}`);
+    // const [data3] = await getJSON(`https://restcountries.com/v2/name/${c3}`);
+
+    // console.log([data1.capital, data2.capital, data3.capital]);
+    ////////////////////////////////////////////////////////////////////////////
+
+    // Promise.all(): combination function (all: helper function on Promise constructor)
+    // this function takes in an array of promises, and it will return a new promise.
+    // 🤖 Chat GPT says...
+    // 여러 개의 프로미스를 배열로 받아들이고, 모든 프로미스가 fulfilled 상태가 될 때까지 기다립니다. 그리고 모든 프로미스가 성공적으로 완료되면, 결과를 배열로 반환하는 새로운 프로미스를 생성합니다. 만약 배열 내의 어떤 프로미스라도 rejected 상태가 되면, Promise.all()은 즉시 rejected 상태로 전환되고, 그 이유가 되는 에러를 반환합니다.
+    // => 배열 안에 있는 모든 프로미스들을 한꺼번에 실행시키고, 모든 프로미스가 실행이 끝날 때까지 (pending -> settled 상태가 될 때까지) 기다렸다가, 결과를 배열로 반환하거나, 단 하나의 프로미스에서라도 에러가 발생하면 즉시 rejected된 상태로 전환된다.
+    Promise.all([
+      `https://restcountries.com/v2/name/${c1}`,
+      `https://restcountries.com/v2/name/${c2}`,
+      `https://restcountries.com/v2/name/${c3}`,
+    ]);
+    console.log(data); // [[{...}], [{...}], [{...}]] => element 자체가 또 하나의 배열로 감싸짐!
+    // These 3 now loaded exactly at the same time. (running in parallel, no longer in sequence now...)
+    console.log(data.map(d => d[0].capital)); // ["Lisbon", "Ottawa", "Dodoma"]
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+get3Countries('portugal', 'canada', 'tanzania'); // ["Lisbon", "Ottawa", "Dodoma"]
