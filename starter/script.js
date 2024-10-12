@@ -582,7 +582,7 @@ const whereAmI = function () {
       );
     })
     .then(response => {
-      console.log(response);
+      console.log(response); 
       if (!response.ok)
         throw new Error(`Problem with geocoding (${response.status})`);
       return response.json();
@@ -729,31 +729,33 @@ console.log('FIRST'); // ✨
 // 위의 whereAmI 함수를 try-catch 구문으로 묶어보자!
 const whereAmI2 = async function () {
   try {
-    // Geolocation
+    // Geolocation: 사용자의 위치 정보를 가져오고, 실패하면 자동으로 에러 처리.
     const pos = await getPosition();
     const { latitude: lat, longitude: lng } = pos.coords;
     // 이 경우엔, 에러를 매뉴얼리하게 throw할 필요가 없다!
     // 💫 geolocation()의 경우, 이미 우리가 reject라는 콜백함수를 자동적으로 불러오게끔 promise를 설정해놨기 때문. 하지만, fetch로부터 리턴되는 promise의 경우에는 데이터를 성공적으로 받지 않아도, 404를 리턴하지 않고, fulfilled되므로 우리가 매뉴얼리하게 에러를 던져줘서 Catch block에 잡히도록 설정해주어야 한다.
 
     // 🤖 ChatGPT says...
-    // geolocation.getCurrentPosition()은 성공 시 success 콜백 함수가 호출되고, 실패 시 error 콜백 함수가 호출되도록 이미 설계되어 있습니다. 그래서 실패할 경우 자동으로 reject 처리가 됩니다
-    // 반면, fetch()는 HTTP 응답이 성공적인지(200~299 상태 코드)와는 별개로, 네트워크 요청이 성공하면 무조건 fulfilled 상태의 Promise를 반환합니다. 따라서 요청이 실패하여 404나 500 같은 에러가 발생하더라도 Promise 자체는 여전히 성공적으로 해결된 것으로 간주됩니다. 이 때문에 응답의 상태 코드를 직접 확인하고, 오류가 있으면 throw로 에러를 발생시켜 catch 블록에서 처리해줘야 합니다.
+    // geolocation.getCurrentPosition()은 성공 시 success 콜백 함수(resolve, 첫번째 매개변수)가 호출되고, 실패 시 error 콜백 함수(reject, 두번째 매개변수)가 호출되도록 "이미 설계"되어 있습니다. 그래서 실패할 경우 자동으로 reject 처리가 됩니다.
+    // 반면, 💥fetch()는 HTTP 응답이 성공적인지(200~299 상태 코드)와는 별개로💥, "네트워크 요청이 성공"하면 >>무조건 fulfilled 상태의 Promise를 반환<<합니다. 따라서 요청이 실패하여 404나 500 같은 에러가 발생하더라도 Promise 자체는 여전히 성공적으로 해결된 것으로 간주됩니다. 이 때문에 응답의 상태 코드를 직접 확인하고, 오류가 있으면 throw로 에러를 발생시켜 catch 블록에서 처리해줘야 합니다.
 
-    // Reverse geocoding
+    // Reverse geocoding: 위도와 경도를 바탕으로 역 지오코딩을 통해 위치 데이터를 가져옴. 실패 시 수동으로 에러를 던짐. (throw new Error)
     const resGeo = await fetch(
       `https://geocode.xyz/${lat},${lng}?geoit=json&auth=428256506246586962931x104466`
     );
-    // ✨ this code handles any error 'resGeo fetch' above.
+    // ✨Solution✨
+    // This code handles any error 'resGeo fetch' above.
     if (!resGeo.ok) throw new Error(`Problem getting location data`);
 
     const dataGeo = await resGeo.json();
     console.log(dataGeo);
 
-    // Country data
+    // Country data: 국가 데이터를 받아오며, HTTP 응답 실패 시 수동으로 에러 처리(throw new Error)
     const res = await fetch(
       `https://restcountries.com/v2/name/${dataGeo.country}`
     );
-    // ✨ this code handles any error 'res fetch' above.
+    // ✨Solution✨
+    // This code handles any error 'res fetch' above.
     if (!res.ok) throw new Error(`Problem getting country`);
 
     console.log(res);
@@ -770,15 +772,86 @@ const whereAmI2 = async function () {
     const data = await res.json();
     console.log(data);
     renderCountry(data[0]);
+
+    // 265. Returning Values from Async Functions
+    // 이 함수로부터 어떤 값을 리턴받고 싶다고 가정해보자..
+    return `You are in ${dataGeo.city}, ${dataGeo.country}`;
   } catch (err) {
-    console.log(err);
+    console.error(`${err} 💥`);
     renderError(`💥 ${err.message}`);
     // 💥 fetch promise doesn't reject on a 404 error, or on a 403 error,
-    // which was actually the original error, which caused everything collapsed in try block. (fetch의 경우, 유저의 internet connection이 안 좋을 때만 reject한다. ... 참고 -> 🖍️ 255. Handling Rejected Promises🖍️)
-    // ✨ Solution to that is just manually create an error. so that error will
-    // then be caught here in the catch block. ✨
+    // which was actually the original error, which caused everything collapsed in try block. (fetch의 경우, 유저의 internet connection이 안 좋을 때만 reject한다.
+    // 🍀 참고 -> 🤖위의 챗지피티 설명 & 🖍️ 255. Handling Rejected Promises🖍️)
+    // ✨Solution to that is just manually create an error. so that error will then be caught here in the catch block.✨
+
+    // 265. Returning Values from Async Functions
+    // 💧 Let's think about errors when using then() and catch()!
+    // ex) 만약에, res의 url에 오타가 발생하여 에러가 발생한다면, 🌺 코드에서 데이터를 불러오지 못하므로, 에러가 발생하는게 정상인데, undefined가 출력됐다! -> 이 말은, then()함수의 콜백함수가 실행이 됐다는 것이고, 이말은, then() 메서드가 불러졌다는 뜻과 동일하며, 결국 이 말은 whereAmI()함수에 의해 리턴되는 Promise가 reject되지 않고, fulfilled 됐다는 뜻이다. (🌼 코드에서 catch()메서드를 이용해 에러를 잡았을 때, 이 코드는 출력되지 않는다는 점에서 async promise가 fulfilled됐다는 사실을 한번더 확인할 수 있음..)
+    // 즉, async function 안에서 에러가 발생했다 할지라도, async function이 리턴하는 프로미스는 여전히 fulfilled된 상태로 리턴된다는 불편한 진실을 마주한것이다...
+    // 따라서 만약 🌼코드에서 에러를 확인하고 싶게 하고 싶으면, 에러를 한번 더 던져줘야(rethrowing) 할 필요성 있음!
+
+    // 🤖 ChatGPT says...
+    // 비동기 함수에서 fetch()와 같은 API를 사용하여 데이터를 가져오는 경우, HTTP 요청이 실패해도 해당 요청은 💥fulfilled 상태로 처리💥됩니다. 따라서 실제로 에러가 발생했을 때는 catch 블록이 실행되지 않고, then 블록에서 undefined나 원치 않는 값을 얻을 수 있습니다.
+
+    // 이런 경우에 에러를 다시 던지는(throw) 것이 중요합니다. 이를 통해:
+    // (1) 에러를 명시적으로 처리할 수 있습니다: whereAmI() 함수에서 발생한 오류를 다시 던짐으로써 호출하는 곳에서 catch를 통해 에러를 처리할 수 있습니다.
+    // (2) 정확한 에러 메시지를 제공할 수 있습니다: 원래의 에러 메시지를 유지하면서 추가적인 정보를 덧붙이거나 새로운 에러를 생성할 수 있습니다.
+
+    // 📌 Reject promise returned from async function
+    // Rethrowing errors : throw the error again so that we can then propagate it down.. -> promise를 manually reject할 수 있도록 하기 위함
+    throw err;
   }
 };
 
+// Test code
 whereAmI2();
 whereAmI2();
+
+// 265. Returning Values from Async Functions (💧(using old way - then() & catch()) - (🌺+🌼: handling error) + (🌳: setting sequence using promise chain)  -> 💖(using the latest philosophy - async/await) -> ✅ IIFEs)
+console.log(`1: Will get location`); // -> 1
+
+// const city = whereAmI(); // -> 3
+// console.log(city); // Promise {<pending>}
+// return 되는 스트링(`You are in ${dataGeo.city}, ${dataGeo.country}`) 대신에,
+// 아직 settled되지 않은 pending상태의 promise를 얻은 이유는
+// 이 시점에서는 자바스크립트가 어떤 값을 리턴하고 싶은지 모르기 때문이다!
+// 컨솔과 리턴의 차이점 다시 한번 명확하게 하자.. 컨솔로그로 처리했다고 리턴값이 컨솔에 나오는게 아니다!!
+
+////////////////////////////////////////////////////////////////
+// > console.log()는 ✨단지 값을 출력하는 것이고, 리턴값과는 무관✨합니다.
+// > async 함수는 항상 Promise를 반환하므로, ✨반환된 값을 실제로 사용하려면✨ await 또는 then()을 사용해야 합니다.
+// 🛟 이유: whereAmI() 함수는 비동기 함수입니다. 즉, async 함수는 기본적으로 Promise를 반환합니다. await를 통해 비동기 작업을 기다리긴 하지만, 함수가 끝날 때까지 기다리지 않고 바로 Promise 객체를 반환합니다.
+// 🛟 해결 방법: 비동기 함수에서 리턴되는 값을 사용하려면 await를 사용하거나, then()을 이용해 결과를 처리해야 합니다.
+//////////////////////////////////////////////////////////////////
+// 1) 💧then() 사용 - city we wrote here is the result value of the promise.
+// whereAmI()
+//   .then(city => console.log(`2: ${city}`)) // 🌺
+//   .catch(err => console.error(`2:  ${err.message} 💥`)) // 🌼
+//   .finally(() => console.log('3: Finished getting location')) // 🌳 밑에 있는 '3: Finished getting location'보다 '2: ${err.message}'가 더 먼저 실행되게 하고 싶다면, global scope에 존재하는 밑의 코드는 지우고(글로벌스콥에 위치한 코드는 무조건 먼저 실행될테므로..), Finally() 메서드로 promise chain활용하여 sequence를 생성하자!
+// console.log(`3: Finished getting location`);
+// => kind of mixing the old and new way of working with promises.
+// => kind of mixes this philosophy of async/await with handling promises using then and catch.. 👉 💖
+
+// 2. 💖 async/await 사용 - whereAmI()자체는 promise를 리턴하므로, 당연히 await으로 비동기적인 데이터를 받아 변수로 저장할 수 있다. 하지만 await은 async함수 안에서만 사용될 수 있고, 우리는 완전히 새로운 함수를 만들고 싶지는 않으므로,,, IIFEs(immediately invoked function expression)을 사용할 것이다!
+// => ⭐️Jonas가 선호하는 방식!! 오직 최신기법 async/await으로만 비동기통신 하는 법⭐️
+
+// ✅ IIFE (going back to and reminding of 10-Functions....)
+// Sometimes we need a function that is only executed once, and never again.
+// This might not appear to make much sense right now, but we actually need this
+// technique later, with something called async/await. -> How could we do that?
+// we could simply create a function. and then only execute it once.
+
+// 다음 함수는 함수를 새롭게 정의한 게 아니라, 딱 한번만 불러오고 싶은 함수로서, 비동기통신 업무를 담당하는 함수, Promise를 리턴하는 함수(await whereAmI())를 포함하고 있다.
+// whereAmI()를 then(), catch()같은 옛날 방법을 이용해서 비동기통신을 이용하는게 아닌,
+// 여기서 한번 더 최신 신택스인 async/await으로만 통신하고 싶다면!!! 근데 나는 새로운 함수를 정의하는게 아니라, 그냥 통신 한번 하자는 뜻으로 하는 거니까.. IIFE를 쓰는게 적절하므로 async을 try-catch block을 포함하는 함수로 감싸고, 이걸 ()으로 묶어줘서 IIFE로 만든 것!
+(async function () {
+  try {
+    const city = await whereAmI();
+    console.log(`2: ${city}`);
+  } catch (err) {
+    console.error(`2: ${err.message} 💥`);
+  }
+  console.log('3: Finished getting location');
+})(); // 세미콜론 필요
+
+console.log(`3: Finished getting location`); // -> 2
