@@ -29,6 +29,7 @@ const renderCountry = function (data, className = '') {
   //   countriesContainer.style.opacity = 1;
 };
 
+/*
 const getCountryDataAndNeighbour = function (country) {
   // 1) using the XMLHttpRequest way of doing AJAX calls.
   // old school way of doing AJAX in Javascript!
@@ -93,6 +94,7 @@ const getCountryDataAndNeighbour = function (country) {
   // 모든 공공 free API는 CORS = yes or unknown으로 가지는데,
   // 이 CORS 없이는, 3자의 API에 접근할 수 없다. (=origin이 다름에도 불구하고 접근할 수 있도록 yes로 설정해준 것 같다..)
 };
+*/
 
 // we have 2 AJAX calls happening at the same time. (in paraelle)
 // 이 함수는 새로고침할 때마다, 순서가 바뀌는 것을 볼 수 있는데(might appear in different order), 그 이유는 요청한 각각의 데이터가 우리가 페이지를 새롭게 로드할 때마다 다르게 도착하기 때문이다. (어쩔땐 Usa가 빠르게, 어쩔땐 portugal이 빠르게..)
@@ -155,8 +157,8 @@ setTimeout(() => {
 
 // 3. Those different states(fulfilled&rejected) are relevant and useful when we use a promise to get a result, which is called, to consume a promise.
 // promise를 consume하려면, 일단 promise를 build 해야겠지!!
-// 예외적으로 fetch API의 경우엔, 이 자체가 promise를 리턴하기 때문에 굳이 build할 필요 없이 promise를 Consume 가능! => In this case, we don't have to build the promise ourselves in order to consume it.
-// 하지만 대부분의 경우에 이렇게 fetch API처럼 promise를 직접 생성할 필요 없다!!
+// ✨예외적으로 fetch API의 경우엔, 이 자체가 promise를 리턴하기 때문에 굳이 build할 필요 없이 promise를 Consume 가능! => In this case, we don't have to build the promise ourselves in order to consume it.
+// 하지만 대부분의 경우에도 이렇게 fetch API처럼 promise를 직접 생성할 필요 없다!!
 // 그냥 promise를 굳이 만들지 않고, 소비가 가능한 경우가 훨씬 많다... easier and more useful part.
 
 // ⭐️ 253. Consuming promises
@@ -164,6 +166,7 @@ setTimeout(() => {
 // const request = fetch('https://restcountries.com/v2/name/canada');
 // console.log(request); // Promise 리턴 [PromiseState]: 'fulfilled'
 
+/*
 // 🍀 10/9 복습
 const getCountryData2 = function (country) {
   fetch(`https://restcountries.com/v2/name/${country}`)
@@ -181,7 +184,8 @@ const getCountryData2 = function (country) {
       //
     });
 };
-// getCountryData2('korea'); // [{...}, {...}] => [{북한}, {남한}]
+getCountryData2('korea'); // [{...}, {...}] => [{북한}, {남한}]
+*/
 
 // 1. fetch: return a new Promise
 // 2. then: to handle a Promise from Fetch API
@@ -239,6 +243,7 @@ const getCountryData = function (country) {
 // => callback function 사용 해야 함!!
 // 더 나아가 만약에 이웃의 이웃의 이웃까지 뽑아내고 싶다면, 계속해서 Then()를 사용해 뻗어나가면 됨!
 // 🍀 10/9 복습
+/*
 const getCountryData3 = function (country) {
   // Country 1
   fetch(`https://restcountries.com/v2/name/${country}`)
@@ -258,7 +263,8 @@ const getCountryData3 = function (country) {
       countriesContainer.style.opacity = 1;
     }); // so we can use finally() after catch() on which return a new Promise.
 };
-// console.log(getCountryData3('korea'));
+console.log(getCountryData3('korea'));
+*/
 
 /*
 // 🍅 256. Throwing Errors Manually
@@ -355,7 +361,11 @@ const getCountryData = function (country) {
 // ⭐️ 255. Handling Rejected Promises (= how to handle error, pretty common scenario when we work with Promsie and especially with AJAX calls)
 
 // 사실 Fetch Promise로부터 값이 못받아지는 경우는, user가 인터넷 연결을 하지 못했을 때 뿐이다.
-// => 우리가 다뤄야 할 에러 사항은 이것뿐!
+// 👉 우리가 다뤄야 할 에러 사항은 이것뿐!
+// 💥💥💥 264. Error handling with try...catch 💥💥💥 에서 중요하게 짚고 넘어가야 되는, 내가 놓쳤던 개념...
+// 이걸 돌려서 말하면, fetch 함수로 HTTP요청을 보냈을 때, 네트워크 요청 자체가 성공하면 promise는 무조건 fulfilled상태로 간주된다. 즉, 서버에서 404, 500등의 에러상태 코드가 반환되어도, 네트워크 요청 자체는 성공적으로 처리되었기 때문에, promise는 여전히 성공상태로 반환된다. 이때문에 fetch()에서 에러를 직접 던져주지 않으면, catch 블록에서 에러를 감지하지 못하게 되는 것......
+// => fetch는 내가 서버로부터 데이터를 fetch해왔냐 안해왔냐 이 여부만 판단하지, 그 데이터가 실제로 존재하냐, 진짜 유효한 데이터를 가져왔냐 이것까지 판단해서 promise를 reject시키지 않는다..
+// 인터넷 연결이 끊겨서 fetch해오지 못했을 때!!만 비로소 Promis가 rejected된 상태로 되고, catch 블록에서 에러가 처리된다.
 
 // 🚨offline으로 돌렸다가 click 하게 되면 에러 발생🚨
 // 에러내용: Uncaught (in promise) TypeError: Failed to fetch
@@ -661,7 +671,7 @@ const getPosition = function () {
 };
 
 // 🤯 선생님과 다르게 브라우저 상에 카드가 안뜬다 ㅠㅠㅠ
-const whereAmI = async function (country) {
+const whereAmI = async function () {
   // Geolocation
   const pos = await getPosition();
   const { latitude: lat, longitude: lng } = pos.coords;
@@ -674,8 +684,10 @@ const whereAmI = async function (country) {
   console.log(dataGeo);
 
   // Country data
-  const res = await fetch(`https://restcountries.com/v2/name/${country}`);
-  console.log(res);
+  const res = await fetch(
+    `https://restcountries.com/v2/name/${dataGeo.country}`
+  );
+  //   console.log(res);
   // => LOOKS LIKE an any "synchronous" code!!
   // ... We had to mess with callback function (Callback hell)
   // ... or consume promises with then method.
@@ -695,3 +707,78 @@ const whereAmI = async function (country) {
 // => Not at all! This function is running asynchronously in the background..(So the ✨console.log('FIRST')✨ is not blocked by whereAmI. code will move onto the next line without blcoking of main thread.) So it's not blocking the call stack or main thread of execution. => 겉으로는 일반 함수처럼 보이지만, 사실은 비동기적으로 처리되는 함수이다.. async-await이 매우 특별한 이유..
 whereAmI();
 console.log('FIRST'); // ✨
+
+// 264. Error handling with try and catch
+// we can't use catch method because we can't really attach it anywhere.
+// Instead, we use something called a try-catch statement. (이건 async/await과는 아무 관련이 없지만, 에러를 잡기 위해서 쓰일 수 있는 방법이다.)
+// Never ignore handling errors especially when it comes to asynchronous code..
+
+// ✅ fetch()함수를 사용해 서버와 HTTP통신을 할 때, 비동기적인 업무를 처리하는 Promise를 다루는 방법이 2가지 존재한다. (⭐️⭐️⭐️⭐️⭐️)
+// 1. 성공적인 데이터를 처리할 때 사용하는 then()과 에러가 발생할 때 사용되는 catch()를 사용 (Promise 체인을 통해 비동기 작업을 처리하는 방식, 여러 then()을 연결하여 여러 단계를 처리가능)
+// 2. 1번 방법보다 더 직관적이고 이해하기 쉬운 async/await & try-catch block 사용 (🍀동기적인 코드 흐름처럼 비동기코드를 작성할 수 있게🍀 해주기 때문에 가독성이 좋다.)
+
+// ** Stupid Example **
+// try {
+//   let y = 1;
+//   const x = 2;
+//   y = 4;
+// } catch (err) {
+//   alert(err.message);
+// }
+
+// 위의 whereAmI 함수를 try-catch 구문으로 묶어보자!
+const whereAmI2 = async function () {
+  try {
+    // Geolocation
+    const pos = await getPosition();
+    const { latitude: lat, longitude: lng } = pos.coords;
+    // 이 경우엔, 에러를 매뉴얼리하게 throw할 필요가 없다!
+    // 💫 geolocation()의 경우, 이미 우리가 reject라는 콜백함수를 자동적으로 불러오게끔 promise를 설정해놨기 때문. 하지만, fetch로부터 리턴되는 promise의 경우에는 데이터를 성공적으로 받지 않아도, 404를 리턴하지 않고, fulfilled되므로 우리가 매뉴얼리하게 에러를 던져줘서 Catch block에 잡히도록 설정해주어야 한다.
+
+    // 🤖 ChatGPT says...
+    // geolocation.getCurrentPosition()은 성공 시 success 콜백 함수가 호출되고, 실패 시 error 콜백 함수가 호출되도록 이미 설계되어 있습니다. 그래서 실패할 경우 자동으로 reject 처리가 됩니다
+    // 반면, fetch()는 HTTP 응답이 성공적인지(200~299 상태 코드)와는 별개로, 네트워크 요청이 성공하면 무조건 fulfilled 상태의 Promise를 반환합니다. 따라서 요청이 실패하여 404나 500 같은 에러가 발생하더라도 Promise 자체는 여전히 성공적으로 해결된 것으로 간주됩니다. 이 때문에 응답의 상태 코드를 직접 확인하고, 오류가 있으면 throw로 에러를 발생시켜 catch 블록에서 처리해줘야 합니다.
+
+    // Reverse geocoding
+    const resGeo = await fetch(
+      `https://geocode.xyz/${lat},${lng}?geoit=json&auth=428256506246586962931x104466`
+    );
+    // ✨ this code handles any error 'resGeo fetch' above.
+    if (!resGeo.ok) throw new Error(`Problem getting location data`);
+
+    const dataGeo = await resGeo.json();
+    console.log(dataGeo);
+
+    // Country data
+    const res = await fetch(
+      `https://restcountries.com/v2/name/${dataGeo.country}`
+    );
+    // ✨ this code handles any error 'res fetch' above.
+    if (!res.ok) throw new Error(`Problem getting country`);
+
+    console.log(res);
+    // => 🍀LOOKS LIKE an any "synchronous" code!!🍀
+    // ... We had to mess with callback function (Callback hell)
+    // ... or consume promises with then method.
+    // => But now, with async and await, it's become EASIER TO READ AND UNDERSTAND!!
+
+    // 위의 코드 두 줄은 아래 코드 세 줄과 동일. 훨씬 간단하지??
+    //   fetch(`https://restcountries.com/v2/name/${country}`).then(res =>
+    //     console.log(res)
+    //   );
+
+    const data = await res.json();
+    console.log(data);
+    renderCountry(data[0]);
+  } catch (err) {
+    console.log(err);
+    renderError(`💥 ${err.message}`);
+    // 💥 fetch promise doesn't reject on a 404 error, or on a 403 error,
+    // which was actually the original error, which caused everything collapsed in try block. (fetch의 경우, 유저의 internet connection이 안 좋을 때만 reject한다. ... 참고 -> 🖍️ 255. Handling Rejected Promises🖍️)
+    // ✨ Solution to that is just manually create an error. so that error will
+    // then be caught here in the catch block. ✨
+  }
+};
+
+whereAmI2();
+whereAmI2();
