@@ -903,3 +903,59 @@ const get3Countries = async function (c1, c2, c3) {
 };
 
 get3Countries('portugal', 'canada', 'tanzania'); // ["Lisbon", "Ottawa", "Dodoma"]
+
+// 267. Other Promise Combinators: 🌟race🌟, allSettled, and any
+// 1️⃣ Promise.race
+// promise가 fulfilled or rejected되냐에 상관없이, 프로미스 배열 중에 하나의 프로미스가 settled 상태가 되는 순간, 그 프로미스만 리턴하도록 short circuit(간단히 줄임)한다.
+(async function () {
+  const res = await Promise.race([
+    getJSON(`https://restcountries.com/v2/name/${c1}`),
+    getJSON(`https://restcountries.com/v2/name/${c2}`),
+    getJSON(`https://restcountries.com/v2/name/${c3}`),
+  ]);
+  console.log(res[0]); // Only get 1 result not an array of the results of all the 3. & This could be different result, will be the fastest of the 3..
+})();
+
+const timeout = function (sec) {
+  return new Promise(function (_, reject) {
+    setTimeout(function () {
+      reject(new Error('Request took too long!'));
+    }, sec * 1000);
+  });
+};
+
+Promise.race([
+  getJSON(`https://restcountries.com/v2/name/tanzania`),
+  timeout(1),
+])
+  .then(res => console.log(res[0]))
+  .catch(err => console.error(err));
+
+// 2️⃣ Promise.allSettled (ES2020)
+// promise가 fulfilled or rejected되냐에 상관없이, 프로미스를 리턴하는 것은 Promise.race()와 같지만, race()처럼 ✨절대 short circuit(간단히 줄임) 하지 않기 떄문에✨ 모든 프로미스에 대한 응답을 받을 때까지 기다렸다가, 리턴한다.
+Promise.allSettled([
+  Promise.resolve('Success'),
+  Promise.reject('Error'), // 에러가 발생했음에도 불구하고 아래 then()에서 에러 출력 ❌
+  Promise.resolve('Another success'),
+]).then(res => console.log(res)); // (3) [{...}, {...}, {...}] 에러 출력 ❌
+
+// 💫 allSettled() vs 🌟all()🌟
+// Promise.all combinator will 💥short circuit💥 if there's one error(=one rejected promise).
+Promise.all([
+  Promise.resolve('Success'),
+  Promise.reject('Error'),
+  Promise.resolve('Another success'),
+])
+  .then(res => console.log(res))
+  .catch(err => console.error(err)); // ERROR 출력
+
+// 3️⃣ Promise.any (ES2021)
+// 가장 첫번째로 fulfilled되는 promise를 리턴하고, rejected promises들은 무시한다.
+// 따라서 이 함수의 결과는 모든 프로미스가 rejected되지 않는 이상, 항상 fulfilled promise으로 나온다.
+Promise.any([
+  Promise.resolve('Success'),
+  Promise.reject('Error'),
+  Promise.resolve('Another success'),
+])
+  .then(res => console.log(res))
+  .catch(err => console.error(err));
