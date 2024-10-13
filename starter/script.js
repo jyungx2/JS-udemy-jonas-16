@@ -623,6 +623,7 @@ const createImage = function (imgPath) {
   return new Promise(function (resolve, reject) {
     const image = document.createElement('img');
     image.setAttribute('src', imgPath);
+    // image.src = imgPath;
 
     image.addEventListener('load', function () {
       imageContainer.append(image);
@@ -670,7 +671,7 @@ const getPosition = function () {
   });
 };
 
-// 🤯 선생님과 다르게 브라우저 상에 카드가 안뜬다 ㅠㅠㅠ
+// 🤯 선생님과 다르게 브라우저 상에 카드가 안뜬다 ㅠㅠㅠ => API통신횟수 제한 ...
 const whereAmI = async function () {
   // Geolocation
   const pos = await getPosition();
@@ -726,20 +727,20 @@ console.log('FIRST'); // ✨
 //   alert(err.message);
 // }
 
-// 위의 whereAmI 함수를 try-catch 구문으로 묶어보자!
+// 위의 whereAmI 함수를 try-catch 구문으로 묶어보자! -> async-await함수 사용시 무조건 써야 하는 신택스... 아니면 에러를 잡을수가 없다. (catch()메서드 붙일 곳이 없기 때문!)
 const whereAmI2 = async function () {
   try {
     // Geolocation: 사용자의 위치 정보를 가져오고, 실패하면 자동으로 에러 처리.
     const pos = await getPosition();
     const { latitude: lat, longitude: lng } = pos.coords;
-    // 이 경우엔, 에러를 매뉴얼리하게 throw할 필요가 없다!
-    // 💫 geolocation()의 경우, 이미 우리가 reject라는 콜백함수를 자동적으로 불러오게끔 promise를 설정해놨기 때문. 하지만, fetch로부터 리턴되는 promise의 경우에는 데이터를 성공적으로 받지 않아도, 404를 리턴하지 않고, fulfilled되므로 우리가 매뉴얼리하게 에러를 던져줘서 Catch block에 잡히도록 설정해주어야 한다.
+    // 이 경우엔, 에러를 매뉴얼리하게 throw 할 필요가 없다!
+    // 💫 geolocation()의 경우, 이미 우리가 reject라는 콜백함수를 자동적으로 불러오게끔 promise를 설정해놨기 때문. 💥하지만, fetch로부터 리턴되는 promise의 경우에는💥 데이터를 성공적으로 받지 않아도, 404를 리턴하지 않고, fulfilled되므로 우리가 매뉴얼리하게 에러를 던져줘서 Catch block에 잡히도록 설정해주어야 한다.
 
     // 🤖 ChatGPT says...
     // geolocation.getCurrentPosition()은 성공 시 success 콜백 함수(resolve, 첫번째 매개변수)가 호출되고, 실패 시 error 콜백 함수(reject, 두번째 매개변수)가 호출되도록 "이미 설계"되어 있습니다. 그래서 실패할 경우 자동으로 reject 처리가 됩니다.
     // 반면, 💥fetch()는 HTTP 응답이 성공적인지(200~299 상태 코드)와는 별개로💥, "네트워크 요청이 성공"하면 >>무조건 fulfilled 상태의 Promise를 반환<<합니다. 따라서 요청이 실패하여 404나 500 같은 에러가 발생하더라도 Promise 자체는 여전히 성공적으로 해결된 것으로 간주됩니다. 이 때문에 응답의 상태 코드를 직접 확인하고, 오류가 있으면 throw로 에러를 발생시켜 catch 블록에서 처리해줘야 합니다.
 
-    // Reverse geocoding: 위도와 경도를 바탕으로 역 지오코딩을 통해 위치 데이터를 가져옴. 실패 시 수동으로 에러를 던짐. (throw new Error)
+    // Reverse geocoding: 위도와 경도를 바탕으로 역 지오코딩을 통해 위치 데이터를 가져옴. 실패 시 ✨수동으로 에러를 던짐✨. (throw new Error)
     const resGeo = await fetch(
       `https://geocode.xyz/${lat},${lng}?geoit=json&auth=428256506246586962931x104466`
     );
@@ -750,7 +751,7 @@ const whereAmI2 = async function () {
     const dataGeo = await resGeo.json();
     console.log(dataGeo);
 
-    // Country data: 국가 데이터를 받아오며, HTTP 응답 실패 시 수동으로 에러 처리(throw new Error)
+    // Country data: 국가 데이터를 받아오며, HTTP 응답 실패 시 ✨수동으로 에러 처리✨(throw new Error)
     const res = await fetch(
       `https://restcountries.com/v2/name/${dataGeo.country}`
     );
@@ -808,31 +809,32 @@ whereAmI2();
 whereAmI2();
 
 // 265. Returning Values from Async Functions (💧(using old way - then() & catch()) - (🌺+🌼: handling error) + (🌳: setting sequence using promise chain)  -> 💖(using the latest philosophy - async/await) -> ✅ IIFEs)
-console.log(`1: Will get location`); // -> 1
+console.log(`1: Will get location`); // -> 1⏳
 
-// const city = whereAmI(); // -> 3
+// const city = whereAmI(); // -> 3⏳
 // console.log(city); // Promise {<pending>}
-// return 되는 스트링(`You are in ${dataGeo.city}, ${dataGeo.country}`) 대신에,
-// 아직 settled되지 않은 pending상태의 promise를 얻은 이유는
-// 이 시점에서는 자바스크립트가 어떤 값을 리턴하고 싶은지 모르기 때문이다!
-// 컨솔과 리턴의 차이점 다시 한번 명확하게 하자.. 컨솔로그로 처리했다고 리턴값이 컨솔에 나오는게 아니다!!
 
 ////////////////////////////////////////////////////////////////
-// > console.log()는 ✨단지 값을 출력하는 것이고, 리턴값과는 무관✨합니다.
-// > async 함수는 항상 Promise를 반환하므로, ✨반환된 값을 실제로 사용하려면✨ await 또는 then()을 사용해야 합니다.
+// return 되는 스트링(`You are in ${dataGeo.city}, ${dataGeo.country}`) 대신에,
+// 아직 settled 되지 않은 pending상태의 promise를 얻은 이유는
+// 이 시점에서는 자바스크립트가 어떤 값을 리턴하고 싶은지 모르기 때문이다!
+// > console.log()는 ✨단지 값을 출력(여기선 Promise 반환)하는 것이고, Promise내 리턴값을 얻고 싶다면, await or then()을 사용해야 한다..
+// > 다시 말해, async 함수는 항상 Promise를 반환하므로, ✨반환된 값을 실제로 사용하려면✨ await 또는 then()을 사용해야 합니다.
+
 // 🛟 이유: whereAmI() 함수는 비동기 함수입니다. 즉, async 함수는 기본적으로 Promise를 반환합니다. await를 통해 비동기 작업을 기다리긴 하지만, 함수가 끝날 때까지 기다리지 않고 바로 Promise 객체를 반환합니다.
-// 🛟 해결 방법: 비동기 함수에서 리턴되는 값을 사용하려면 await를 사용하거나, then()을 이용해 결과를 처리해야 합니다.
+// 🛟 해결 방법: "비동기 함수에서 리턴되는 값"을 사용하려면 await를 사용하거나, then()을 이용해 결과를 처리해야 합니다.
 //////////////////////////////////////////////////////////////////
+
 // 1) 💧then() 사용 - city we wrote here is the result value of the promise.
 // whereAmI()
 //   .then(city => console.log(`2: ${city}`)) // 🌺
 //   .catch(err => console.error(`2:  ${err.message} 💥`)) // 🌼
 //   .finally(() => console.log('3: Finished getting location')) // 🌳 밑에 있는 '3: Finished getting location'보다 '2: ${err.message}'가 더 먼저 실행되게 하고 싶다면, global scope에 존재하는 밑의 코드는 지우고(글로벌스콥에 위치한 코드는 무조건 먼저 실행될테므로..), Finally() 메서드로 promise chain활용하여 sequence를 생성하자!
 // console.log(`3: Finished getting location`);
-// => kind of mixing the old and new way of working with promises.
+// => kind of mixing the old(then & catch) and new way(async/await) of working with promises.
 // => kind of mixes this philosophy of async/await with handling promises using then and catch.. 👉 💖
 
-// 2. 💖 async/await 사용 - whereAmI()자체는 promise를 리턴하므로, 당연히 await으로 비동기적인 데이터를 받아 변수로 저장할 수 있다. 하지만 await은 async함수 안에서만 사용될 수 있고, 우리는 완전히 새로운 함수를 만들고 싶지는 않으므로,,, IIFEs(immediately invoked function expression)을 사용할 것이다!
+// 2. 💖 async/await 사용 - whereAmI()자체는 "promise를 리턴"하므로, 당연히 await으로 비동기적인 데이터를 받아 변수로 저장할 수 있다. 하지만 await은 async 함수 안에서만 사용될 수 있고, 우리는 완전히 새로운 함수를 만들고 싶지는 않으므로,,, 딱 한번만 실행시키는 IIFEs(immediately invoked function expression)을 사용할 것이다!
 // => ⭐️Jonas가 선호하는 방식!! 오직 최신기법 async/await으로만 비동기통신 하는 법⭐️
 
 // ✅ IIFE (going back to and reminding of 10-Functions....)
@@ -841,8 +843,8 @@ console.log(`1: Will get location`); // -> 1
 // technique later, with something called async/await. -> How could we do that?
 // we could simply create a function. and then only execute it once.
 
-// 다음 함수는 함수를 새롭게 정의한 게 아니라, 딱 한번만 불러오고 싶은 함수로서, 비동기통신 업무를 담당하는 함수, Promise를 리턴하는 함수(await whereAmI())를 포함하고 있다.
-// whereAmI()를 then(), catch()같은 옛날 방법을 이용해서 비동기통신을 이용하는게 아닌,
+// 다음 함수는 함수를 새롭게 정의한 게 아니라, 💥딱 한번만 불러오고 싶은 함수💥로서, 비동기통신 업무를 담당하는 함수, Promise를 리턴하는 함수(await whereAmI())를 포함하고 있다.
+// whereAmI()를 then(), catch()같은 옛날 방법을 이용해서 비동기통신을 이용하는 게 아닌,
 // 여기서 한번 더 최신 신택스인 async/await으로만 통신하고 싶다면!!! 근데 나는 새로운 함수를 정의하는게 아니라, 그냥 통신 한번 하자는 뜻으로 하는 거니까.. IIFE를 쓰는게 적절하므로 async을 try-catch block을 포함하는 함수로 감싸고, 이걸 ()으로 묶어줘서 IIFE로 만든 것!
 (async function () {
   try {
@@ -854,7 +856,7 @@ console.log(`1: Will get location`); // -> 1
   console.log('3: Finished getting location');
 })(); // 세미콜론 필요
 
-console.log(`3: Finished getting location`); // -> 2
+console.log(`3: Finished getting location`); // -> 2⏳
 
 // 266. Running Promises in Parellel
 const get3Countries = async function (c1, c2, c3) {
@@ -869,8 +871,7 @@ const get3Countries = async function (c1, c2, c3) {
     // This doesn't make so much sense!!
     // 여기서 우리는 ajax call들을 서로가 서로에게 영향을 받지 않음에도 불구하고,
     // 하나가 끝나면 하나를 부르고, 또 하나가 끝나면 하나를 차례대로 부르고 있다.
-    // => 이 얼마나 비효율적인 방식인가? 유저입장에서 데이터를 충분히 한번에 받을 수 있음에도 불구하고,
-    // 그냥 하나하나씩 천천히 차례대로 받고 있는 셈이다. (데이터 통신에서 1초는 매우 긴 시간이다..)
+    // => 이 얼마나 비효율적인 방식인가? 유저입장에서 데이터를 충분히 한번에 받을 수 있음에도 불구하고, 그냥 하나하나씩 천천히 차례대로 받고 있는 셈이다. (데이터 통신에서 1초는 매우 긴 시간이다..)
     // -> Why should the second Ajax call wait for the first one?!
     // 🖍️Inspect - Network - Waterfall 부분을 보면, 데이터들이 차례대로 받아와지는 것을 확인할 수 있음.
 
@@ -887,14 +888,14 @@ const get3Countries = async function (c1, c2, c3) {
     // Promise.all(): combination function (all: helper function on Promise constructor)
     // this function takes in an array of promises, and it will return a new promise.
     // 🤖 Chat GPT says...
-    // 여러 개의 프로미스를 배열로 받아들이고, 모든 프로미스가 fulfilled 상태가 될 때까지 기다립니다. 그리고 모든 프로미스가 성공적으로 완료되면, 결과를 배열로 반환하는 새로운 프로미스를 생성합니다. 만약 배열 내의 어떤 프로미스라도 rejected 상태가 되면, Promise.all()은 즉시 rejected 상태로 전환되고, 그 이유가 되는 에러를 반환합니다.
+    // 💫 Promise.all(): 여러 개의 프로미스를 배열로 받아들이고, 모든 프로미스가 fulfilled 상태가 될 때까지 기다립니다. 그리고 모든 프로미스가 성공적으로 완료되면, 결과를 배열로 반환하는 "새로운 프로미스를 생성"합니다. 만약 배열 내의 "어떤 프로미스라도 rejected 상태가 되면, Promise.all()은 즉시 rejected 상태로 전환"되고, 그 이유가 되는 에러를 반환합니다.
     // => 배열 안에 있는 모든 프로미스들을 한꺼번에 실행시키고, 모든 프로미스가 실행이 끝날 때까지 (pending -> settled 상태가 될 때까지) 기다렸다가, 결과를 배열로 반환하거나, 단 하나의 프로미스에서라도 에러가 발생하면 즉시 rejected된 상태로 전환된다.
-    Promise.all([
+    const data = await Promise.all([
       `https://restcountries.com/v2/name/${c1}`,
       `https://restcountries.com/v2/name/${c2}`,
       `https://restcountries.com/v2/name/${c3}`,
     ]);
-    console.log(data); // [[{...}], [{...}], [{...}]] => element 자체가 또 하나의 배열로 감싸짐!
+    console.log(data); // [[{...}], [{...}], [{...}]] => 각각의 element 자체가 또 하나의 배열로 감싸짐!
     // These 3 now loaded exactly at the same time. (running in parallel, no longer in sequence now...)
     console.log(data.map(d => d[0].capital)); // ["Lisbon", "Ottawa", "Dodoma"]
   } catch (err) {
@@ -906,14 +907,15 @@ get3Countries('portugal', 'canada', 'tanzania'); // ["Lisbon", "Ottawa", "Dodoma
 
 // 267. Other Promise Combinators: 🌟race🌟, allSettled, and any
 // 1️⃣ Promise.race
-// promise가 fulfilled or rejected되냐에 상관없이, 프로미스 배열 중에 하나의 프로미스가 settled 상태가 되는 순간, 그 프로미스만 리턴하도록 short circuit(간단히 줄임)한다.
+// promise가 fulfilled or rejected되냐에 상관없이, 프로미스 배열 중에 💫하나의 프로미스💫가 settled 상태가 되는 순간, 그 프로미스만 리턴하도록 short circuit(간단히 줄임)한다.
 (async function () {
   const res = await Promise.race([
-    getJSON(`https://restcountries.com/v2/name/${c1}`),
-    getJSON(`https://restcountries.com/v2/name/${c2}`),
-    getJSON(`https://restcountries.com/v2/name/${c3}`),
+    getJSON(`https://restcountries.com/v2/name/${italy}`),
+    getJSON(`https://restcountries.com/v2/name/${egypt}`),
+    getJSON(`https://restcountries.com/v2/name/${mexico}`),
   ]);
   console.log(res[0]); // Only get 1 result not an array of the results of all the 3. & This could be different result, will be the fastest of the 3..
+  // 그때그때마다 결과값 달라진다!!
 })();
 
 const timeout = function (sec) {
@@ -924,12 +926,13 @@ const timeout = function (sec) {
   });
 };
 
+// 다음 두개의 promise를 리턴하는 함수들은 Promise.race()으로 묶어줬으므로, 둘 중에 더 빨리 실행되는 함수가 실행될 것이다. 따라서 만약 1초후에 실행되는 함수를 리턴하는 프라미스를 리턴하는, 함수인 timeout(1)이 getJSON()보다 먼저 (더 빨리) 실행되면, getJSON()에 대한 결과값을 Then()함수가 받겠지만, 그렇지 않다면, timeout(1)가 실행되어 catch() 메서드에서 reject()에서 던진 에러 메시지를 받아내겠지!
 Promise.race([
   getJSON(`https://restcountries.com/v2/name/tanzania`),
   timeout(1),
 ])
-  .then(res => console.log(res[0]))
-  .catch(err => console.error(err));
+  .then(res => console.log(res[0])) // If getJSON resolves before timeout(1) rejects, you'll get the data from getJSON.
+  .catch(err => console.error(err)); // If timeout(1) executes first, it will reject, and you'll catch the error.
 
 // 2️⃣ Promise.allSettled (ES2020)
 // promise가 fulfilled or rejected되냐에 상관없이, 프로미스를 리턴하는 것은 Promise.race()와 같지만, race()처럼 ✨절대 short circuit(간단히 줄임) 하지 않기 떄문에✨ 모든 프로미스에 대한 응답을 받을 때까지 기다렸다가, 리턴한다.
@@ -940,7 +943,7 @@ Promise.allSettled([
 ]).then(res => console.log(res)); // (3) [{...}, {...}, {...}] 에러 출력 ❌
 
 // 💫 allSettled() vs 🌟all()🌟
-// Promise.all combinator will 💥short circuit💥 if there's one error(=one rejected promise).
+// Promise.all combinator will 💥short circuit💥 if there's one error(=one rejected promise). 반면, allSettled는 절대 short-circuit하지 않고, rejected되는 지와 상관없이, 모두 다 리턴한다!
 Promise.all([
   Promise.resolve('Success'),
   Promise.reject('Error'),
@@ -959,3 +962,96 @@ Promise.any([
 ])
   .then(res => console.log(res))
   .catch(err => console.error(err));
+
+// 268. Coding Challenge #3
+const imageContainer = document.querySelector('.images');
+
+const createImage = function (imgPath) {
+  return new Promise(function (resolve, reject) {
+    const image = document.createElement('img');
+    image.setAttribute('src', imgPath);
+    // image.src = imgPath;
+
+    image.addEventListener('load', function () {
+      imageContainer.append(image);
+      resolve(image);
+    });
+
+    image.addEventListener('error', function () {
+      reject(new Error('Image not found'));
+    });
+  });
+};
+
+const wait = function (seconds) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, seconds * 1000);
+  });
+};
+
+// let currentImg; // 🧩 async/await의 경우, 같은 block내에서 synchronous 함수처럼 처리하므로, 따로 변수를 정의해서 일일이 매뉴얼리하게 정의해줄 필요 없다!!
+
+// PART 1
+// ✅ Write an async function 'loadNPause' that recreate Challenge #2, this time using async/await (only the part where the promise is consumed, reuse the 'createImage' function from before)
+const loadNPause = async function () {
+  try {
+    const img = await createImage('img/img-1.jpg');
+    console.log('Image 1 loaded');
+    await wait(2); // 🧩 await 써주자! 단, Resolved value를 갖지 않으므로, 변수로 저장할 필욘 없다.
+
+    img.style.display = 'none';
+    img = await createImage('img/img-2.jpg');
+    console.log('Image 2 loaded');
+    await wait(2);
+    img.style.display = 'none';
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+// ✅ then() & catch() 메서드를 사용했을 때...
+// let currentImg;
+// createImage('./img/img-1.jpg')
+//   .then(img => {
+//     currentImg = img;
+//     console.log('Image 1 loaded');
+//     return wait(2);
+//   })
+//   .then(() => {
+//     currentImg.style.display = 'none';
+//     return createImage('img/img-2.jpg');
+//   })
+//   .then(img => {
+//     currentImg = img;
+//     console.log('Image 2 loaded');
+//     return wait(2);
+//   })
+//   .then(() => {
+//     currentImg.style.display = 'none';
+//   })
+//   .catch(err => console.error(err));
+
+// PART 2
+const loadAll = async function (imgArr) {
+  try {
+    const imgs = imgArr.map(async img => await createImage(img));
+    console.log(imgs); // Promise {<pending>}
+    // Use a promise combinator function to actually get the images from the array.
+    // Ex) Promise.all(), Promise.allSettled(), Promise.race(), Promise.any()
+
+    // 1) Promise.all() + then() & catch()
+    // Promise.all(imgs).then(images => {
+    //   images.forEach(img => img.classList.add('parallel'));
+    //   console.log('All the images loaded: ', images);
+    // });
+
+    // 2) Promise.all() + async/await
+    const images = await Promise.all(imgs); // 모든 이미지가 로드될 때까지 대기
+    images.forEach(img => img.classList.add('parallel')); // 클래스 'parallel' 추가
+    console.log('All the images loaded: ', images);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+loadAll(['img/img-1.jpg', 'img/img-2.jpg', 'img/img- 3.jpg']);
